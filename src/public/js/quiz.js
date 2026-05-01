@@ -9,6 +9,7 @@ const Quiz = (() => {
   let currentQuestion = 0;
   let userAnswers = [];
   let selectedDifficulty = 'beginner';
+  let quizToken = null;
 
   const init = () => {
     document.getElementById('quiz-start').addEventListener('click', startQuiz);
@@ -44,7 +45,8 @@ const Quiz = (() => {
       const json = await res.json();
       if (!json.success) {throw new Error(json.error?.message || 'Failed');}
 
-      currentQuiz = json.data;
+      currentQuiz = json.data.quiz;
+      quizToken = json.data.quizToken;
       currentQuestion = 0;
       userAnswers = [];
 
@@ -123,7 +125,7 @@ const Quiz = (() => {
       const res = await fetch('/api/quiz/submit', {
         method: 'POST',
         headers: CSRF.headers(),
-        body: JSON.stringify({ questions: currentQuiz.questions, userAnswers }),
+        body: JSON.stringify({ questions: currentQuiz.questions, userAnswers, quizToken }),
       });
       const json = await res.json();
       const r = json.data;

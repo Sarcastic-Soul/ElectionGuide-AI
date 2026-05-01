@@ -76,6 +76,10 @@ const quizSubmitValidation = [
     .optional()
     .isString()
     .withMessage('Session ID must be a string'),
+  body('quizToken')
+    .notEmpty()
+    .withMessage('Quiz token is required for security validation')
+    .isString(),
 ];
 
 /**

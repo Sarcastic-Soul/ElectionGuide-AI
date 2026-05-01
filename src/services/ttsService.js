@@ -59,6 +59,9 @@ const resetClient = () => {
   audioCache.clear();
 };
 
+const redisService = require('./redisService');
+const monitoringService = require('./monitoringService');
+
 /**
  * Synthesizes text to speech audio.
  * @param {string} text - Text to convert to speech
@@ -67,12 +70,27 @@ const resetClient = () => {
  * @returns {Promise<string>} Base64-encoded MP3 audio data
  */
 const synthesize = async (text, languageCode = 'en-US', voiceGender = 'NEUTRAL') => {
+  const cacheKey = `tts:${languageCode}:${voiceGender}:${Buffer.from(text).toString('base64').substring(0, 50)}`;
+  const redisClient = redisService.getClient();
+
   // Check cache first
-  const cacheKey = `${languageCode}:${voiceGender}:${text}`;
-  const cached = audioCache.get(cacheKey);
-  if (cached) {
-    return cached;
+  if (redisClient) {
+    try {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        monitoringService.recordCacheHit('tts', true);
+        return cached;
+      }
+    } catch (err) {}
+  } else {
+    const cached = audioCache.get(cacheKey);
+    if (cached) {
+      monitoringService.recordCacheHit('tts', true);
+      return cached;
+    }
   }
+
+  monitoringService.recordCacheHit('tts', false);
 
   const client = getClient();
 
@@ -96,7 +114,13 @@ const synthesize = async (text, languageCode = 'en-US', voiceGender = 'NEUTRAL')
   const audioBase64 = response.audioContent.toString('base64');
 
   // Cache the result
-  audioCache.set(cacheKey, audioBase64);
+  if (redisClient) {
+    try {
+      await redisClient.setEx(cacheKey, config.cache.ttsTTL / 1000, audioBase64);
+    } catch (err) {}
+  } else {
+    audioCache.set(cacheKey, audioBase64);
+  }
 
   return audioBase64;
 };

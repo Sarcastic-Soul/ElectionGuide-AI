@@ -1,0 +1,13 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Lock down all collections to direct client access.
+    // The Express backend authenticates via Application Default Credentials (ADC)
+    // which bypasses these rules entirely, preserving full server-side capability
+    // while eliminating client-side vulnerabilities.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

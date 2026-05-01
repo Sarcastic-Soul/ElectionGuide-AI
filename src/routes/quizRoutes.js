@@ -14,6 +14,8 @@ const { getValidationErrors, successResponse } = require('../utils/helpers');
 const geminiService = require('../services/geminiService');
 const firestoreService = require('../services/firestoreService');
 const loggingService = require('../services/loggingService');
+const authService = require('../services/authService');
+const monitoringService = require('../services/monitoringService');
 
 /**
  * POST /api/quiz/generate
@@ -33,9 +35,13 @@ router.post(
 
     const quiz = await geminiService.generateQuiz(topic, difficulty, count);
 
+    // Generate cryptographic token to protect leaderboard
+    const quizToken = authService.generateQuizToken(quiz.topic, quiz.questions);
+
     loggingService.info('Quiz generated', { topic, difficulty, count }).catch(() => {});
 
-    res.json(successResponse(quiz, 'Quiz generated successfully'));
+    // Return both quiz data and token
+    res.json(successResponse({ quiz, quizToken }, 'Quiz generated successfully'));
   })
 );
 
@@ -52,13 +58,19 @@ router.post(
       return res.status(400).json(errors);
     }
 
-    const { questions, userAnswers, sessionId } = req.body;
+    const { questions, userAnswers, sessionId, quizToken } = req.body;
+
+    // Mathematically prove the questions came from our generator
+    const decodedToken = authService.verifyQuizToken(quizToken, questions);
 
     if (questions.length !== userAnswers.length) {
       throw new AppError('Questions and answers arrays must have the same length', 400, 'VALIDATION_ERROR');
     }
 
     const gradeResult = await geminiService.gradeQuiz(questions, userAnswers);
+
+    // Record custom metric for completions
+    monitoringService.recordQuizCompletion();
 
     // Save to Firestore asynchronously
     try {

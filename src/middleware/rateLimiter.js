@@ -42,7 +42,22 @@
  */
 
 const rateLimit = require('express-rate-limit');
+const RedisStore = require('rate-limit-redis').RedisStore;
 const config = require('../config');
+const redisService = require('../services/redisService');
+
+// Function to generate the store dynamically based on Redis availability
+const getStore = (prefix) => {
+  const client = redisService.getClient();
+  if (client) {
+    return new RedisStore({
+      sendCommand: (...args) => client.sendCommand(args),
+      prefix: prefix,
+    });
+  }
+  // Fallback to memory store
+  return undefined; // express-rate-limit uses MemoryStore by default when store is undefined
+};
 
 /**
  * Global rate limiter — applies to all routes.
@@ -53,6 +68,7 @@ const globalLimiter = rateLimit({
   max: config.rateLimit.maxGlobal,
   standardHeaders: true,
   legacyHeaders: false,
+  store: getStore('rl:global:'),
   message: {
     success: false,
     error: {
@@ -74,6 +90,7 @@ const aiLimiter = rateLimit({
   max: config.rateLimit.maxAI,
   standardHeaders: true,
   legacyHeaders: false,
+  store: getStore('rl:ai:'),
   message: {
     success: false,
     error: {

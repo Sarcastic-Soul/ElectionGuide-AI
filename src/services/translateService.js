@@ -64,6 +64,9 @@ const resetClient = () => {
   translationCache.clear();
 };
 
+const redisService = require('./redisService');
+const monitoringService = require('./monitoringService');
+
 /**
  * Translates text to the target language with caching.
  * @param {string} text - Text to translate
@@ -71,12 +74,30 @@ const resetClient = () => {
  * @returns {Promise<object>} Translation result
  */
 const translateText = async (text, targetLanguage) => {
-  // Check cache first
-  const cacheKey = `${targetLanguage}:${text}`;
-  const cached = translationCache.get(cacheKey);
-  if (cached) {
-    return { ...cached, fromCache: true };
+  const cacheKey = `translation:${targetLanguage}:${Buffer.from(text).toString('base64').substring(0, 50)}`;
+  const redisClient = redisService.getClient();
+
+  // Try Redis cache first
+  if (redisClient) {
+    try {
+      const cachedStr = await redisClient.get(cacheKey);
+      if (cachedStr) {
+        monitoringService.recordCacheHit('translate', true);
+        return { ...JSON.parse(cachedStr), fromCache: true };
+      }
+    } catch (err) {
+      // Ignore Redis error and proceed
+    }
+  } else {
+    // Fallback to LRU cache
+    const cached = translationCache.get(cacheKey);
+    if (cached) {
+      monitoringService.recordCacheHit('translate', true);
+      return { ...cached, fromCache: true };
+    }
   }
+
+  monitoringService.recordCacheHit('translate', false);
 
   const client = getClient();
   const [translation] = await client.translate(text, targetLanguage);
@@ -88,19 +109,20 @@ const translateText = async (text, targetLanguage) => {
     sourceLanguage: detection.language,
     targetLanguage,
     confidence: detection.confidence,
-    fromCache: false,
   };
 
-  // Cache the result (without fromCache flag)
-  translationCache.set(cacheKey, {
-    originalText: text,
-    translatedText: translation,
-    sourceLanguage: detection.language,
-    targetLanguage,
-    confidence: detection.confidence,
-  });
+  // Cache the result
+  if (redisClient) {
+    try {
+      await redisClient.setEx(cacheKey, config.cache.translationTTL / 1000, JSON.stringify(result));
+    } catch (err) {
+      // Ignore Redis error
+    }
+  } else {
+    translationCache.set(cacheKey, result);
+  }
 
-  return result;
+  return { ...result, fromCache: false };
 };
 
 /**

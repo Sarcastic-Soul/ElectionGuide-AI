@@ -25,24 +25,40 @@
 
 const { createApp } = require('./app');
 const config = require('./config');
+const redisService = require('./services/redisService');
+const firestoreService = require('./services/firestoreService');
 
-const app = createApp();
+let server;
 
-const server = app.listen(config.port, () => {
-  console.log(
-    JSON.stringify({
-      severity: 'INFO',
-      message: `ElectionGuide AI server started on port ${config.port}`,
-      environment: config.nodeEnv,
-      timestamp: new Date().toISOString(),
-    })
-  );
+const startServer = async () => {
+  await redisService.initRedis();
+  const app = createApp();
+
+  server = app.listen(config.port, () => {
+    console.log(
+      JSON.stringify({
+        severity: 'INFO',
+        message: `ElectionGuide AI server started on port ${config.port}`,
+        environment: config.nodeEnv,
+        timestamp: new Date().toISOString(),
+      })
+    );
+
+    // Pre-warm Firestore connection pool to eliminate cold-start penalty
+    // for the first user hitting the leaderboard or submitting a quiz.
+    firestoreService.getLeaderboard(1).catch(() => {});
+  });
+};
+
+startServer().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });
 
 // ─── Graceful Shutdown Handler ───
 // Cloud Run sends SIGTERM before stopping a container instance.
 // We close the server gracefully, allowing in-flight requests to complete.
-const shutdown = (signal) => {
+const shutdown = async (signal) => {
   console.log(
     JSON.stringify({
       severity: 'INFO',
@@ -51,16 +67,22 @@ const shutdown = (signal) => {
     })
   );
 
-  server.close(() => {
-    console.log(
-      JSON.stringify({
-        severity: 'INFO',
-        message: 'Server closed. Exiting process.',
-        timestamp: new Date().toISOString(),
-      })
-    );
+  await redisService.closeRedis();
+
+  if (server) {
+    server.close(() => {
+      console.log(
+        JSON.stringify({
+          severity: 'INFO',
+          message: 'Server closed. Exiting process.',
+          timestamp: new Date().toISOString(),
+        })
+      );
+      process.exit(0);
+    });
+  } else {
     process.exit(0);
-  });
+  }
 
   // Force exit after 10s if graceful shutdown fails
   // (Cloud Run's default termination grace period is 10s)

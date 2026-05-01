@@ -41,6 +41,7 @@
 const { GoogleGenAI } = require('@google/genai');
 const config = require('../config');
 const secretService = require('./secretService');
+const monitoringService = require('./monitoringService');
 const { ELECTION_SYSTEM_PROMPT, QUIZ_SYSTEM_PROMPT } = require('../utils/constants');
 
 /** @type {GoogleGenAI|null} Singleton AI client */
@@ -102,6 +103,7 @@ const safetySettings = [
  */
 const streamChat = async (message, history = []) => {
   const client = await getClient();
+  const startTime = Date.now();
 
   const contents = [
     ...history.map((msg) => ({
@@ -126,6 +128,8 @@ const streamChat = async (message, history = []) => {
     },
   });
 
+  monitoringService.recordGeminiLatency(Date.now() - startTime);
+
   return response;
 };
 
@@ -137,6 +141,7 @@ const streamChat = async (message, history = []) => {
  */
 const chat = async (message, history = []) => {
   const client = await getClient();
+  const startTime = Date.now();
 
   const contents = [
     ...history.map((msg) => ({
@@ -161,6 +166,8 @@ const chat = async (message, history = []) => {
     },
   });
 
+  monitoringService.recordGeminiLatency(Date.now() - startTime);
+
   return response.text || '';
 };
 
@@ -173,6 +180,7 @@ const chat = async (message, history = []) => {
  */
 const generateQuiz = async (topic, difficulty, count = 5) => {
   const client = await getClient();
+  const startTime = Date.now();
 
   const prompt = `Generate a quiz about "${topic}" at ${difficulty} difficulty level with exactly ${count} multiple-choice questions.
 
@@ -202,6 +210,8 @@ Return ONLY valid JSON in this exact format:
       temperature: 0.8,
     },
   });
+
+  monitoringService.recordGeminiLatency(Date.now() - startTime);
 
   const text = response.text || '';
 

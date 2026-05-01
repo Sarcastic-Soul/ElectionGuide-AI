@@ -41,6 +41,12 @@ const config = {
   /** @type {string} Google Cloud project ID — Cloud Run also sets GOOGLE_CLOUD_PROJECT */
   projectId: process.env.GOOGLE_CLOUD_PROJECT || process.env.PROJECT_ID || 'promptwars-493516',
 
+  /** @type {string|null} Redis connection URL for distributed rate limiting */
+  redisUrl: process.env.REDIS_URL || null,
+
+  /** @type {string} Secret used for JWT signing and leaderboard validation */
+  jwtSecret: process.env.JWT_SECRET || 'electionguide-dev-secret-key-123',
+
   /**
    * @type {object} Rate limiting configuration
    * @property {number} windowMs - Time window in milliseconds (15 minutes)

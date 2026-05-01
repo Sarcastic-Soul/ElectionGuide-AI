@@ -48,10 +48,11 @@ const App = (() => {
     }
   };
 
-  /** Keyboard shortcuts */
+  /** Keyboard shortcuts — uses Ctrl+Shift to avoid conflicts with browser/OS Alt shortcuts */
   const setupKeyboardShortcuts = () => {
     document.addEventListener('keydown', (e) => {
-      if (e.altKey) {
+      // Ctrl+Shift+1-4 for tab switching (avoids Alt+N browser/OS conflicts)
+      if (e.ctrlKey && e.shiftKey) {
         const shortcuts = { '1': 'chat', '2': 'timeline', '3': 'quiz', '4': 'about' };
         if (shortcuts[e.key]) {
           e.preventDefault();
@@ -62,7 +63,7 @@ const App = (() => {
       if (e.key === '/' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
         e.preventDefault();
         const input = document.getElementById('chat-input');
-        if (input) input.focus();
+        if (input) { input.focus(); }
       }
     });
   };

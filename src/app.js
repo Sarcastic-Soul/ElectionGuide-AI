@@ -33,11 +33,13 @@
 const express = require('express');
 const helmet = require('helmet');
 const compression = require('compression');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 
 const { helmetConfig } = require('./config/security');
 const { globalLimiter } = require('./middleware/rateLimiter');
 const { inputSanitizer } = require('./middleware/inputSanitizer');
+const { csrfProtection } = require('./middleware/csrfProtection');
 const { requestLogger } = require('./middleware/requestLogger');
 const { notFoundHandler, globalErrorHandler } = require('./middleware/errorHandler');
 const routes = require('./routes');
@@ -70,11 +72,17 @@ const createApp = () => {
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 
+  // ─── Cookie Parser (required for CSRF double-submit cookie pattern) ───
+  app.use(cookieParser());
+
   // ─── Global Rate Limiting (Layer 2 — 100 requests per 15 minutes per IP) ───
   app.use(globalLimiter);
 
-  // ─── Input Sanitization (Layer 3 — DOMPurify strips all HTML/XSS payloads) ───
+  // ─── Input Sanitization (Layer 3 — sanitize-html strips all HTML/XSS payloads) ───
   app.use(inputSanitizer);
+
+  // ─── CSRF Protection (Layer 4 — double-submit cookie pattern) ───
+  app.use(csrfProtection);
 
   // ─── Health Check (before API routes — used by Cloud Run for readiness probes) ───
   app.get('/health', (_req, res) => {

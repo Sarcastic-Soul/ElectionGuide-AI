@@ -28,6 +28,8 @@ router.get(
       summary,
     }));
 
+    // Timeline data is static — cache aggressively (1 hour, with ETag for revalidation)
+    res.set('Cache-Control', 'public, max-age=3600, s-maxage=86400');
     res.json(successResponse(summary, 'Election timeline retrieved'));
   })
 );

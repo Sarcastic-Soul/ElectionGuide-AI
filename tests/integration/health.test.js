@@ -30,6 +30,12 @@ describe('Health & Timeline Integration', () => {
       expect(res.body.data[0]).toHaveProperty('step');
       expect(res.body.data[0]).toHaveProperty('icon');
     });
+
+    it('should include Cache-Control headers for timeline', async () => {
+      const res = await request(app).get('/api/timeline');
+      expect(res.headers['cache-control']).toContain('public');
+      expect(res.headers['cache-control']).toContain('max-age=3600');
+    });
   });
 
   describe('GET /api/timeline/:step', () => {
@@ -55,6 +61,45 @@ describe('Health & Timeline Integration', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data).toBeInstanceOf(Array);
       expect(res.body.data.length).toBeGreaterThan(5);
+    });
+  });
+
+  describe('CSRF Protection', () => {
+    it('should set CSRF cookie and header on GET requests', async () => {
+      const res = await request(app).get('/health');
+      expect(res.headers['x-csrf-token']).toBeDefined();
+      expect(res.headers['x-csrf-token'].length).toBe(64); // 32 bytes hex
+      expect(res.headers['set-cookie']).toBeDefined();
+    });
+
+    it('should reject POST requests without CSRF token', async () => {
+      const res = await request(app)
+        .post('/api/chat')
+        .send({ message: 'test' });
+      expect(res.status).toBe(403);
+      expect(res.body.error.code).toBe('CSRF_VALIDATION_FAILED');
+    });
+
+    it('should accept POST requests with valid CSRF token', async () => {
+      // First, get a CSRF token via any GET request
+      const getRes = await request(app).get('/health');
+      const cookies = getRes.headers['set-cookie'];
+
+      // Extract csrf cookie value
+      const csrfCookie = cookies.find((c) => c.startsWith('_csrf='));
+      const csrfValue = csrfCookie.split('=')[1].split(';')[0];
+
+      // POST with matching cookie and header — CSRF should pass
+      // The request may fail downstream (400 for validation, etc.) but NOT 403
+      const postRes = await request(app)
+        .post('/api/translate')
+        .set('Cookie', `_csrf=${csrfValue}`)
+        .set('X-CSRF-Token', csrfValue)
+        .set('Content-Type', 'application/json')
+        .send({ text: 'hello', targetLanguage: 'es' });
+
+      // Key assertion: CSRF did NOT block the request
+      expect(postRes.status).not.toBe(403);
     });
   });
 

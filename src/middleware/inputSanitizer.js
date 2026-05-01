@@ -3,57 +3,59 @@
 /**
  * @file middleware/inputSanitizer.js
  * @module middleware/inputSanitizer
- * @description Server-side XSS prevention via DOMPurify + jsdom.
+ * @description Server-side XSS prevention via sanitize-html.
  *
- * This middleware is the **third layer** of our defense-in-depth security model.
- * It runs DOMPurify (the industry-standard XSS sanitization library) on the server side
- * using jsdom as the DOM implementation.
+ * Previous implementation used jsdom + DOMPurify (~40MB runtime overhead).
+ * This was replaced with sanitize-html — a purpose-built, lightweight library
+ * that does the same zero-tag stripping without loading a full DOM engine.
  *
- * **Why server-side DOMPurify?**
- * - Client-side sanitization can be bypassed by directly calling the API
- * - Server-side sanitization is the only reliable XSS prevention layer
- * - DOMPurify is more robust than regex-based sanitization (handles edge cases like
- *   nested tags, encoded characters, SVG-based XSS, etc.)
+ * **Why sanitize-html over jsdom+DOMPurify?**
+ * - ~95% smaller footprint (2MB vs 40MB+)
+ * - Purpose-built for server-side HTML sanitization
+ * - No DOM simulation overhead — faster per-request
+ * - Same security guarantees (strips all tags/attributes)
  *
  * **What gets sanitized:**
  * - `req.body` — All POST/PUT/PATCH request bodies
  * - `req.query` — URL query parameters
  * - `req.params` — URL path parameters
  *
- * **Configuration**: `ALLOWED_TAGS: []` and `ALLOWED_ATTR: []` strip ALL HTML.
- * This is intentional — our API accepts plain text only, never HTML. The AI model
- * generates markdown, which the client renders safely.
+ * **Configuration**: `allowedTags: []` and `allowedAttributes: {}` strip ALL HTML.
+ * This is intentional — our API accepts plain text only, never HTML.
  *
- * @see {@link https://github.com/cure53/DOMPurify} DOMPurify documentation
+ * @see {@link https://www.npmjs.com/package/sanitize-html} sanitize-html
  */
 
-const { JSDOM } = require('jsdom');
-const createDOMPurify = require('dompurify');
+const sanitizeHtml = require('sanitize-html');
 const config = require('../config');
 
-// Initialize DOMPurify with jsdom window
-const window = new JSDOM('').window;
-const DOMPurify = createDOMPurify(window);
+/**
+ * Sanitize-html configuration — strip ALL tags and attributes.
+ * @type {object}
+ */
+const sanitizeOptions = {
+  allowedTags: [],
+  allowedAttributes: {},
+  disallowedTagsMode: 'discard',
+};
 
 /**
  * Sanitizes a single string value by stripping all HTML/script tags.
  * @param {string} input - Raw input string
- * @returns {string} Sanitized string
+ * @returns {string} Sanitized string with all HTML removed
  */
 const sanitizeString = (input) => {
   if (typeof input !== 'string') {
     return input;
   }
-  return DOMPurify.sanitize(input, {
-    ALLOWED_TAGS: [],
-    ALLOWED_ATTR: [],
-  }).trim();
+  return sanitizeHtml(input, sanitizeOptions).trim();
 };
 
 /**
- * Recursively sanitizes all string values in an object.
- * @param {object} obj - Object to sanitize
- * @returns {object} Sanitized object
+ * Recursively sanitizes all string values in an object or array.
+ * Handles nested objects, arrays, and mixed types safely.
+ * @param {*} obj - Value to sanitize (string, object, array, or primitive)
+ * @returns {*} Sanitized value with same structure
  */
 const sanitizeObject = (obj) => {
   if (typeof obj === 'string') {
@@ -74,17 +76,19 @@ const sanitizeObject = (obj) => {
 
 /**
  * Express middleware that sanitizes req.body, req.query, and req.params.
- * Also enforces maximum input length on body string fields.
- * @param {object} req - Express request
- * @param {object} res - Express response
- * @param {Function} next - Express next
+ * Also enforces maximum input length on body string fields to prevent
+ * abuse of downstream AI APIs (Gemini, TTS, Translation).
+ *
+ * @param {import('express').Request} req - Express request
+ * @param {import('express').Response} res - Express response
+ * @param {import('express').NextFunction} next - Express next
  */
 const inputSanitizer = (req, res, next) => {
   try {
     if (req.body) {
       req.body = sanitizeObject(req.body);
 
-      // Enforce max length on common text fields
+      // Enforce max length on common text fields to prevent API cost abuse
       const textFields = ['message', 'text', 'query', 'content'];
       for (const field of textFields) {
         if (typeof req.body[field] === 'string' && req.body[field].length > config.input.maxChatLength) {

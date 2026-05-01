@@ -1,6 +1,10 @@
 'use strict';
 
 jest.mock('@google/genai');
+jest.mock('../../../src/services/secretService', () => ({
+  getSecret: jest.fn().mockResolvedValue('test-api-key'),
+  resetClient: jest.fn(),
+}));
 
 const { GoogleGenAI } = require('@google/genai');
 const geminiService = require('../../../src/services/geminiService');

@@ -132,6 +132,52 @@ const getAnalyticsSummary = async () => {
   return summary;
 };
 
+/**
+ * Saves a conversation turn to Firestore for history persistence.
+ * Enables users to resume conversations across sessions.
+ *
+ * @param {string} sessionId - User session identifier
+ * @param {string} userMessage - User's message
+ * @param {string} aiResponse - AI's response
+ * @returns {Promise<string>} Document ID
+ */
+const saveConversation = async (sessionId, userMessage, aiResponse) => {
+  const db = getDb();
+  const docRef = await db.collection('conversations').add({
+    sessionId,
+    userMessage: userMessage.substring(0, 500), // Truncate to control storage costs
+    aiResponse: aiResponse.substring(0, 2000),
+    createdAt: Firestore.FieldValue.serverTimestamp(),
+  });
+  return docRef.id;
+};
+
+/**
+ * Retrieves conversation history for a session.
+ * Returns the last N turns ordered by creation time.
+ *
+ * @param {string} sessionId - User session identifier
+ * @param {number} [limit=10] - Maximum number of turns to retrieve
+ * @returns {Promise<Array<object>>} Conversation history
+ */
+const getConversation = async (sessionId, limit = 10) => {
+  const db = getDb();
+  const snapshot = await db
+    .collection('conversations')
+    .where('sessionId', '==', sessionId)
+    .orderBy('createdAt', 'desc')
+    .limit(limit)
+    .get();
+
+  return snapshot.docs
+    .map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || null,
+    }))
+    .reverse(); // Chronological order
+};
+
 module.exports = {
   getDb,
   resetDb,
@@ -139,4 +185,6 @@ module.exports = {
   getLeaderboard,
   logAnalyticsEvent,
   getAnalyticsSummary,
+  saveConversation,
+  getConversation,
 };

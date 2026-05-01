@@ -38,7 +38,7 @@ const Quiz = (() => {
     try {
       const res = await fetch('/api/quiz/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: CSRF.headers(),
         body: JSON.stringify({ topic, difficulty: selectedDifficulty, count: 5 }),
       });
       const json = await res.json();
@@ -122,7 +122,7 @@ const Quiz = (() => {
     try {
       const res = await fetch('/api/quiz/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: CSRF.headers(),
         body: JSON.stringify({ questions: currentQuiz.questions, userAnswers }),
       });
       const json = await res.json();

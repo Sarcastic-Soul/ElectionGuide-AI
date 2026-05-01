@@ -47,7 +47,7 @@ const I18n = (() => {
     try {
       const res = await fetch('/api/translate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: CSRF.headers(),
         body: JSON.stringify({ text, targetLanguage: targetLang }),
       });
       const json = await res.json();

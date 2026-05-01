@@ -18,12 +18,27 @@
  * invoke external APIs that have per-character pricing. Separate limits allow normal browsing
  * while protecting expensive operations.
  *
+ * **⚠️ KNOWN LIMITATION**: This uses express-rate-limit's default in-memory store,
+ * which is **per-process**. In Cloud Run with auto-scaling, each container instance
+ * maintains its own counter. A user hitting N instances can make N × limit requests.
+ *
+ * **Mitigation strategies (not implemented here due to free-tier constraints):**
+ * - Use `rate-limit-redis` with Cloud Memorystore for a shared counter
+ * - Deploy Google Cloud Armor WAF rules for IP-based rate limiting at the edge
+ * - Set Cloud Run `--max-instances=1` to force single-instance (sacrifices availability)
+ *
+ * For this application, single-container rate limiting is acceptable because:
+ * - Cloud Run defaults to 1 instance for low-traffic apps
+ * - The AI rate limiter (20 req/15min) still provides cost protection per-instance
+ * - Google Cloud APIs have their own built-in quota limits as a secondary defense
+ *
  * **Key configuration**:
  * - `standardHeaders: true` — Returns RFC-compliant `RateLimit-*` headers
  * - `legacyHeaders: false` — Disables deprecated `X-RateLimit-*` headers
  * - Custom `keyGenerator` — Uses `req.ip` (trust proxy must be enabled for Cloud Run)
  *
  * @see {@link https://www.npmjs.com/package/express-rate-limit} express-rate-limit
+ * @see {@link https://cloud.google.com/armor/docs/rate-limiting-overview} Cloud Armor rate limiting
  */
 
 const rateLimit = require('express-rate-limit');

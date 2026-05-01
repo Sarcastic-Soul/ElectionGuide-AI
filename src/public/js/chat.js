@@ -66,7 +66,7 @@ const Chat = (() => {
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: CSRF.headers(),
         body: JSON.stringify({ message }),
       });
 

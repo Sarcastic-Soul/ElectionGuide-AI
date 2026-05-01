@@ -31,7 +31,7 @@ const Accessibility = (() => {
     try {
       const res = await fetch('/api/tts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: CSRF.headers(),
         body: JSON.stringify({ text: text.substring(0, 500) }),
       });
       const json = await res.json();

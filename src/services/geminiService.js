@@ -40,6 +40,7 @@
 
 const { GoogleGenAI } = require('@google/genai');
 const config = require('../config');
+const secretService = require('./secretService');
 const { ELECTION_SYSTEM_PROMPT, QUIZ_SYSTEM_PROMPT } = require('../utils/constants');
 
 /** @type {GoogleGenAI|null} Singleton AI client */
@@ -47,15 +48,28 @@ let aiClient = null;
 
 /**
  * Initializes or returns the Gemini AI client singleton.
+ * Attempts to load API key from:
+ * 1. Injected options (for testing)
+ * 2. Google Cloud Secret Manager (production)
+ * 3. Environment variable GEMINI_API_KEY (local development)
+ * 4. Frozen config fallback
+ *
  * @param {object} [options] - Optional override options for testing
  * @param {string} [options.apiKey] - Override API key
- * @returns {GoogleGenAI} AI client instance
+ * @returns {Promise<GoogleGenAI>} AI client instance
  */
-const getClient = (options = {}) => {
+const getClient = async (options = {}) => {
   if (!aiClient) {
-    const apiKey = options.apiKey || process.env.GEMINI_API_KEY || config.geminiApiKey;
+    // Priority: injected > Secret Manager > env var > config
+    let apiKey = options.apiKey;
     if (!apiKey) {
-      throw new Error('GEMINI_API_KEY environment variable is not set');
+      apiKey = await secretService.getSecret(
+        'GEMINI_API_KEY',
+        process.env.GEMINI_API_KEY || config.geminiApiKey
+      );
+    }
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY not found in Secret Manager, environment, or config');
     }
     aiClient = new GoogleGenAI({ apiKey });
   }
@@ -87,7 +101,7 @@ const safetySettings = [
  * @returns {AsyncIterable} Streaming response chunks
  */
 const streamChat = async (message, history = []) => {
-  const client = getClient();
+  const client = await getClient();
 
   const contents = [
     ...history.map((msg) => ({
@@ -122,7 +136,7 @@ const streamChat = async (message, history = []) => {
  * @returns {Promise<string>} Complete AI response text
  */
 const chat = async (message, history = []) => {
-  const client = getClient();
+  const client = await getClient();
 
   const contents = [
     ...history.map((msg) => ({
@@ -158,7 +172,7 @@ const chat = async (message, history = []) => {
  * @returns {Promise<object>} Parsed quiz object with questions and answers
  */
 const generateQuiz = async (topic, difficulty, count = 5) => {
-  const client = getClient();
+  const client = await getClient();
 
   const prompt = `Generate a quiz about "${topic}" at ${difficulty} difficulty level with exactly ${count} multiple-choice questions.
 

@@ -25,7 +25,7 @@ const Chat = (() => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const message = elements.input.value.trim();
-    if (!message || isStreaming) return;
+    if (!message || isStreaming) {return;}
     sendMessage(message);
   };
 
@@ -43,7 +43,7 @@ const Chat = (() => {
 
   const handleChipClick = (e) => {
     const chip = e.target.closest('.chip');
-    if (chip && !isStreaming) sendMessage(chip.dataset.question);
+    if (chip && !isStreaming) {sendMessage(chip.dataset.question);}
   };
 
   const handleTTSClick = (e) => {
@@ -70,7 +70,7 @@ const Chat = (() => {
         body: JSON.stringify({ message }),
       });
 
-      if (!response.ok) throw new Error('Failed to get response');
+      if (!response.ok) {throw new Error('Failed to get response');}
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -79,14 +79,14 @@ const Chat = (() => {
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {break;}
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n\n');
         buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
+          if (!line.startsWith('data: ')) {continue;}
           try {
             const data = JSON.parse(line.slice(6));
             if (data.type === 'chunk' && data.text) {
@@ -100,7 +100,7 @@ const Chat = (() => {
 
       // Remove typing indicator, set final content
       const typingEl = aiMsgEl.querySelector('.typing-indicator');
-      if (typingEl) typingEl.remove();
+      if (typingEl) {typingEl.remove();}
       if (fullText) {
         bubbleEl.innerHTML = App.renderMarkdown(fullText);
       } else {

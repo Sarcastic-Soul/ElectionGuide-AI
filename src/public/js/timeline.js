@@ -8,13 +8,13 @@ const Timeline = (() => {
   let loaded = false;
 
   const loadIfNeeded = async () => {
-    if (loaded) return;
+    if (loaded) {return;}
     loaded = true;
 
     try {
       const res = await fetch('/api/timeline');
       const json = await res.json();
-      if (!json.success) throw new Error('Failed to load timeline');
+      if (!json.success) {throw new Error('Failed to load timeline');}
       renderTimeline(json.data);
     } catch {
       document.getElementById('timeline').innerHTML =
@@ -53,7 +53,7 @@ const Timeline = (() => {
 
   const handleClick = async (e) => {
     const card = e.target.closest('.timeline-item__card');
-    if (!card) return;
+    if (!card) {return;}
 
     const item = card.closest('.timeline-item');
     const stepId = item.dataset.step;
@@ -77,7 +77,7 @@ const Timeline = (() => {
       try {
         const res = await fetch(`/api/timeline/${stepId}`);
         const json = await res.json();
-        if (!json.success) throw new Error();
+        if (!json.success) {throw new Error();}
         const d = json.data;
 
         const factsHtml = d.keyFacts ? `

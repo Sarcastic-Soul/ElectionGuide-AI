@@ -27,7 +27,7 @@ const Accessibility = (() => {
 
   /** Speak text using Cloud TTS API with browser Audio fallback */
   const speak = async (text) => {
-    if (!text) return;
+    if (!text) {return;}
     try {
       const res = await fetch('/api/tts', {
         method: 'POST',

@@ -23,7 +23,7 @@ const App = (() => {
 
   /** Switch between panels */
   const switchTab = (tab) => {
-    if (state.activeTab === tab) return;
+    if (state.activeTab === tab) {return;}
     state.activeTab = tab;
 
     // Update nav buttons
@@ -79,7 +79,7 @@ const App = (() => {
 
   /** Simple markdown to HTML converter */
   const renderMarkdown = (text) => {
-    if (!text) return '';
+    if (!text) {return '';}
     return text
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')

@@ -33,7 +33,7 @@ const Quiz = (() => {
 
     startBtn.disabled = true;
     btnText.textContent = 'Generating...';
-    if (loader) loader.hidden = false;
+    if (loader) {loader.hidden = false;}
 
     try {
       const res = await fetch('/api/quiz/generate', {
@@ -42,7 +42,7 @@ const Quiz = (() => {
         body: JSON.stringify({ topic, difficulty: selectedDifficulty, count: 5 }),
       });
       const json = await res.json();
-      if (!json.success) throw new Error(json.error?.message || 'Failed');
+      if (!json.success) {throw new Error(json.error?.message || 'Failed');}
 
       currentQuiz = json.data;
       currentQuestion = 0;
@@ -60,7 +60,7 @@ const Quiz = (() => {
     } finally {
       startBtn.disabled = false;
       btnText.textContent = 'Start Quiz';
-      if (loader) loader.hidden = true;
+      if (loader) {loader.hidden = true;}
     }
   };
 
@@ -98,8 +98,8 @@ const Quiz = (() => {
     document.querySelectorAll('.quiz-option').forEach((btn) => {
       btn.disabled = true;
       const i = parseInt(btn.dataset.index);
-      if (i === q.correctIndex) btn.classList.add('quiz-option--correct');
-      else if (i === index && i !== q.correctIndex) btn.classList.add('quiz-option--wrong');
+      if (i === q.correctIndex) {btn.classList.add('quiz-option--correct');}
+      else if (i === index && i !== q.correctIndex) {btn.classList.add('quiz-option--wrong');}
     });
 
     // Move to next question after delay

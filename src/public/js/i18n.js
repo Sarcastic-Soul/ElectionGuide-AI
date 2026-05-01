@@ -16,7 +16,7 @@ const I18n = (() => {
   };
 
   const setLanguage = async (lang) => {
-    if (lang === currentLang) return;
+    if (lang === currentLang) {return;}
     currentLang = lang;
     document.documentElement.lang = lang;
 
@@ -32,7 +32,7 @@ const I18n = (() => {
       el.dataset.original = original;
 
       const translated = await translate(original, lang);
-      if (translated) el.textContent = translated;
+      if (translated) {el.textContent = translated;}
     }
 
     // Set RTL for Arabic
@@ -42,7 +42,7 @@ const I18n = (() => {
 
   const translate = async (text, targetLang) => {
     const key = `${targetLang}:${text}`;
-    if (cache.has(key)) return cache.get(key);
+    if (cache.has(key)) {return cache.get(key);}
 
     try {
       const res = await fetch('/api/translate', {

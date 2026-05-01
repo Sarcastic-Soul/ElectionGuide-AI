@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ElectionGuide AI — An interactive AI-powered assistant that helps you understand the election process, timelines, and civic participation.">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="robots" content="index, follow">
+  <title>ElectionGuide AI — Election Process Education Assistant</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <!-- Skip Navigation for Accessibility -->
+  <a href="#main-content" class="skip-link" id="skip-nav">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="header" role="banner">
+    <div class="header__container">
+      <div class="header__brand">
+        <span class="header__icon" aria-hidden="true">🏛️</span>
+        <h1 class="header__title">ElectionGuide <span class="header__accent">AI</span></h1>
+      </div>
+
+      <nav class="header__nav" role="navigation" aria-label="Main navigation">
+        <ul class="nav__list" id="nav-list">
+          <li><button class="nav__btn nav__btn--active" data-tab="chat" id="nav-chat" aria-controls="panel-chat" aria-selected="true" role="tab">💬 Chat</button></li>
+          <li><button class="nav__btn" data-tab="timeline" id="nav-timeline" aria-controls="panel-timeline" aria-selected="false" role="tab">📅 Timeline</button></li>
+          <li><button class="nav__btn" data-tab="quiz" id="nav-quiz" aria-controls="panel-quiz" aria-selected="false" role="tab">🧠 Quiz</button></li>
+          <li><button class="nav__btn" data-tab="about" id="nav-about" aria-controls="panel-about" aria-selected="false" role="tab">ℹ️ About</button></li>
+        </ul>
+      </nav>
+
+      <!-- Accessibility Controls -->
+      <div class="header__a11y" aria-label="Accessibility controls">
+        <button class="a11y-btn" id="btn-font-increase" aria-label="Increase font size" title="Increase font size">A+</button>
+        <button class="a11y-btn" id="btn-font-decrease" aria-label="Decrease font size" title="Decrease font size">A-</button>
+        <button class="a11y-btn" id="btn-contrast" aria-label="Toggle high contrast mode" title="Toggle high contrast">◐</button>
+        <select class="a11y-select" id="language-select" aria-label="Select language">
+          <option value="en">🌐 English</option>
+          <option value="es">Español</option>
+          <option value="hi">हिन्दी</option>
+          <option value="fr">Français</option>
+          <option value="de">Deutsch</option>
+          <option value="zh">中文</option>
+          <option value="ja">日本語</option>
+          <option value="ko">한국어</option>
+          <option value="ar">العربية</option>
+          <option value="pt">Português</option>
+          <option value="ta">தமிழ்</option>
+          <option value="te">తెలుగు</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main id="main-content" class="main" role="main">
+    <!-- ARIA Live Region for Screen Reader Announcements -->
+    <div id="sr-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- ═══════ CHAT PANEL ═══════ -->
+    <section class="panel panel--active" id="panel-chat" role="tabpanel" aria-labelledby="nav-chat">
+      <div class="chat">
+        <div class="chat__messages" id="chat-messages" aria-label="Chat messages" role="log" aria-live="polite">
+          <!-- Welcome Message -->
+          <div class="message message--ai" id="welcome-message">
+            <div class="message__avatar" aria-hidden="true">🏛️</div>
+            <div class="message__content">
+              <div class="message__bubble">
+                <p><strong>Welcome to ElectionGuide AI!</strong> 🇺🇸</p>
+                <p>I'm your interactive assistant for understanding the election process. Ask me anything about:</p>
+                <ul>
+                  <li>📋 Voter registration & requirements</li>
+                  <li>🗳️ How primaries and caucuses work</li>
+                  <li>⭐ The Electoral College explained</li>
+                  <li>🏛️ Election Day procedures</li>
+                  <li>📜 Voting rights history</li>
+                </ul>
+                <p>Try the quick topics below or type your own question!</p>
+              </div>
+              <button class="message__tts-btn" aria-label="Read this message aloud" title="Read aloud" data-text="Welcome to ElectionGuide AI! I'm your interactive assistant for understanding the election process.">
+                🔊
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Action Chips -->
+        <div class="chat__chips" id="chat-chips" aria-label="Quick topics">
+          <button class="chip" data-question="What is the Electoral College and how does it work?">⭐ Electoral College</button>
+          <button class="chip" data-question="How do I register to vote?">📋 Voter Registration</button>
+          <button class="chip" data-question="What is the difference between a primary and a caucus?">🗳️ Primaries vs Caucuses</button>
+          <button class="chip" data-question="Explain gerrymandering in simple terms">🗺️ Gerrymandering</button>
+          <button class="chip" data-question="What are the key amendments related to voting rights?">📜 Voting Rights</button>
+          <button class="chip" data-question="How does mail-in voting work?">✉️ Mail-in Voting</button>
+        </div>
+
+        <!-- Chat Input -->
+        <form class="chat__input-area" id="chat-form" aria-label="Send a message">
+          <label for="chat-input" class="sr-only">Type your question about elections</label>
+          <textarea
+            class="chat__input"
+            id="chat-input"
+            placeholder="Ask about the election process..."
+            rows="1"
+            maxlength="2000"
+            aria-label="Type your question about elections"
+            autocomplete="off"
+          ></textarea>
+          <button class="chat__send-btn" id="chat-send" type="submit" aria-label="Send message">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ═══════ TIMELINE PANEL ═══════ -->
+    <section class="panel" id="panel-timeline" role="tabpanel" aria-labelledby="nav-timeline" hidden>
+      <div class="timeline-container">
+        <h2 class="section-title">The Election Process Timeline</h2>
+        <p class="section-subtitle">Follow the complete journey from voter registration to inauguration</p>
+        <div class="timeline" id="timeline" role="list" aria-label="Election process steps">
+          <!-- Timeline items rendered by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════ QUIZ PANEL ═══════ -->
+    <section class="panel" id="panel-quiz" role="tabpanel" aria-labelledby="nav-quiz" hidden>
+      <div class="quiz-container">
+        <h2 class="section-title">Test Your Knowledge</h2>
+        <p class="section-subtitle">Challenge yourself with AI-generated quizzes on the election process</p>
+
+        <!-- Quiz Setup -->
+        <div class="quiz-setup" id="quiz-setup">
+          <div class="quiz-setup__card">
+            <h3 class="quiz-setup__heading">Choose Your Quiz</h3>
+
+            <div class="form-group">
+              <label for="quiz-topic" class="form-label">Topic</label>
+              <select class="form-select" id="quiz-topic">
+                <option value="Voter Registration">📋 Voter Registration</option>
+                <option value="Primary Elections">🗳️ Primary Elections</option>
+                <option value="Electoral College">⭐ Electoral College</option>
+                <option value="Voting Rights History">📜 Voting Rights History</option>
+                <option value="Election Day Process">🏛️ Election Day Process</option>
+                <option value="Campaign Finance">💰 Campaign Finance</option>
+                <option value="General Election Knowledge">🇺🇸 General Election Knowledge</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="quiz-difficulty" class="form-label">Difficulty</label>
+              <div class="difficulty-pills" role="radiogroup" aria-label="Select difficulty">
+                <button class="pill pill--active" data-difficulty="beginner" role="radio" aria-checked="true" id="diff-beginner">🌱 Beginner</button>
+                <button class="pill" data-difficulty="intermediate" role="radio" aria-checked="false" id="diff-intermediate">📚 Intermediate</button>
+                <button class="pill" data-difficulty="expert" role="radio" aria-checked="false" id="diff-expert">🎓 Expert</button>
+              </div>
+            </div>
+
+            <button class="btn btn--primary btn--lg" id="quiz-start">
+              <span class="btn__text">Start Quiz</span>
+              <span class="btn__loader" hidden aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quiz Questions (rendered by JS) -->
+        <div class="quiz-active" id="quiz-active" hidden>
+          <div class="quiz-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="quiz-progress-bar">
+            <div class="quiz-progress__fill" id="quiz-progress-fill"></div>
+            <span class="quiz-progress__text" id="quiz-progress-text">Question 1 of 5</span>
+          </div>
+          <div class="quiz-question-card" id="quiz-question-card">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Quiz Results (rendered by JS) -->
+        <div class="quiz-results" id="quiz-results" hidden>
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════ ABOUT PANEL ═══════ -->
+    <section class="panel" id="panel-about" role="tabpanel" aria-labelledby="nav-about" hidden>
+      <div class="about-container">
+        <h2 class="section-title">About ElectionGuide AI</h2>
+
+        <div class="about-grid">
+          <article class="about-card">
+            <div class="about-card__icon" aria-hidden="true">🤖</div>
+            <h3 class="about-card__title">Powered by Google Gemini</h3>
+            <p class="about-card__text">Uses Google's latest Gemini 2.5 Flash AI model for accurate, non-partisan election education with real-time streaming responses.</p>
+          </article>
+
+          <article class="about-card">
+            <div class="about-card__icon" aria-hidden="true">🌐</div>
+            <h3 class="about-card__title">Multilingual Support</h3>
+            <p class="about-card__text">Powered by Google Cloud Translation API, supporting 12+ languages to make election education accessible worldwide.</p>
+          </article>
+
+          <article class="about-card">
+            <div class="about-card__icon" aria-hidden="true">🔊</div>
+            <h3 class="about-card__title">Text-to-Speech</h3>
+            <p class="about-card__text">Google Cloud Text-to-Speech integration lets you listen to any content, making the app accessible for visually impaired users.</p>
+          </article>
+
+          <article class="about-card">
+            <div class="about-card__icon" aria-hidden="true">♿</div>
+            <h3 class="about-card__title">Fully Accessible</h3>
+            <p class="about-card__text">WCAG 2.1 AA compliant with keyboard navigation, screen reader support, high contrast mode, and adjustable font sizes.</p>
+          </article>
+
+          <article class="about-card">
+            <div class="about-card__icon" aria-hidden="true">🔒</div>
+            <h3 class="about-card__title">Secure by Design</h3>
+            <p class="about-card__text">Enterprise-grade security with Helmet CSP, rate limiting, input sanitization, and zero data collection. Your privacy matters.</p>
+          </article>
+
+          <article class="about-card">
+            <div class="about-card__icon" aria-hidden="true">☁️</div>
+            <h3 class="about-card__title">Google Cloud Native</h3>
+            <p class="about-card__text">Deployed on Google Cloud Run with Firestore, Cloud Logging, and 6 integrated Google services for reliability and scale.</p>
+          </article>
+        </div>
+
+        <div class="about-tech">
+          <h3 class="about-tech__title">Google Services Used</h3>
+          <div class="tech-badges">
+            <span class="badge">Gemini 2.5 Flash</span>
+            <span class="badge">Cloud Run</span>
+            <span class="badge">Cloud Firestore</span>
+            <span class="badge">Cloud Translation</span>
+            <span class="badge">Cloud Text-to-Speech</span>
+            <span class="badge">Cloud Logging</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer" role="contentinfo">
+    <p class="footer__text">
+      Built with ❤️ using Google Cloud & Gemini AI — <em>Non-partisan election education for everyone</em>
+    </p>
+  </footer>
+
+  <!-- JavaScript Modules -->
+  <script src="/js/app.js"></script>
+  <script src="/js/chat.js"></script>
+  <script src="/js/timeline.js"></script>
+  <script src="/js/quiz.js"></script>
+  <script src="/js/accessibility.js"></script>
+  <script src="/js/i18n.js"></script>
+</body>
+</html>

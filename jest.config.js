@@ -44,4 +44,7 @@ module.exports = {
 
   // Timeout per test (10s — generous for async Google API mocks)
   testTimeout: 10000,
+
+  // Global setup files
+  setupFiles: ['<rootDir>/tests/setup.js'],
 };

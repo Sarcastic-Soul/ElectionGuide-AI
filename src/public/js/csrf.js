@@ -11,13 +11,13 @@
  */
 'use strict';
 
-const CSRF = (() => {
+
   /**
    * Reads the _csrf cookie value.
    * @returns {string} CSRF token value, or empty string if not found
    */
-  const getToken = () => {
-    const match = document.cookie.match(/(?:^|;\s*)_csrf=([^;]*)/);
+const getToken = () => {
+  const match = document.cookie.match(/(?:^|;\s*)_csrf=([^;]*)/);
     return match ? decodeURIComponent(match[1]) : '';
   };
 
@@ -25,10 +25,9 @@ const CSRF = (() => {
    * Returns standard headers for JSON POST requests with CSRF token.
    * @returns {object} Headers object for fetch()
    */
-  const headers = () => ({
+const headers = () => ({
     'Content-Type': 'application/json',
     'X-CSRF-Token': getToken(),
   });
 
-  return { getToken, headers };
-})();
+export { getToken, headers };

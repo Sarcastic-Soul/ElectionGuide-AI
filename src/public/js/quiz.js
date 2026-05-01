@@ -1,17 +1,19 @@
+import { announce, renderMarkdown } from './app.js';
+import { headers } from './csrf.js';
 /**
  * @module quiz
  * @description Interactive quiz module with AI-generated questions.
  */
 'use strict';
 
-const Quiz = (() => {
-  let currentQuiz = null;
-  let currentQuestion = 0;
-  let userAnswers = [];
-  let selectedDifficulty = 'beginner';
-  let quizToken = null;
 
-  const init = () => {
+let currentQuiz = null;
+let currentQuestion = 0;
+let userAnswers = [];
+let selectedDifficulty = 'beginner';
+let quizToken = null;
+
+const init = () => {
     document.getElementById('quiz-start').addEventListener('click', startQuiz);
     document.querySelectorAll('.pill[data-difficulty]').forEach((pill) => {
       pill.addEventListener('click', () => {
@@ -26,23 +28,23 @@ const Quiz = (() => {
     });
   };
 
-  const startQuiz = async () => {
-    const topic = document.getElementById('quiz-topic').value;
-    const startBtn = document.getElementById('quiz-start');
-    const loader = startBtn.querySelector('.btn__loader');
-    const btnText = startBtn.querySelector('.btn__text');
+const startQuiz = async () => {
+  const topic = document.getElementById('quiz-topic').value;
+  const startBtn = document.getElementById('quiz-start');
+  const loader = startBtn.querySelector('.btn__loader');
+  const btnText = startBtn.querySelector('.btn__text');
 
     startBtn.disabled = true;
     btnText.textContent = 'Generating...';
     if (loader) {loader.hidden = false;}
 
     try {
-      const res = await fetch('/api/quiz/generate', {
+    const res = await fetch('/api/quiz/generate', {
         method: 'POST',
-        headers: CSRF.headers(),
+        headers: headers(),
         body: JSON.stringify({ topic, difficulty: selectedDifficulty, count: 5 }),
       });
-      const json = await res.json();
+    const json = await res.json();
       if (!json.success) {throw new Error(json.error?.message || 'Failed');}
 
       currentQuiz = json.data.quiz;
@@ -55,9 +57,9 @@ const Quiz = (() => {
       document.getElementById('quiz-results').hidden = true;
 
       renderQuestion();
-      App.announce('Quiz started. Question 1.');
-    } catch (error) {
-      App.announce('Failed to generate quiz. Please try again.');
+      announce('Quiz started. Question 1.');
+    } catch (e) {
+      announce('Failed to generate quiz. Please try again.');
       alert('Failed to generate quiz. Please try again.');
     } finally {
       startBtn.disabled = false;
@@ -66,16 +68,16 @@ const Quiz = (() => {
     }
   };
 
-  const renderQuestion = () => {
-    const q = currentQuiz.questions[currentQuestion];
-    const total = currentQuiz.questions.length;
-    const progress = ((currentQuestion) / total) * 100;
+const renderQuestion = () => {
+  const q = currentQuiz.questions[currentQuestion];
+  const total = currentQuiz.questions.length;
+  const progress = ((currentQuestion) / total) * 100;
 
     document.getElementById('quiz-progress-fill').style.width = `${progress}%`;
     document.getElementById('quiz-progress-text').textContent = `Question ${currentQuestion + 1} of ${total}`;
     document.getElementById('quiz-progress-bar').setAttribute('aria-valuenow', progress);
 
-    const card = document.getElementById('quiz-question-card');
+  const card = document.getElementById('quiz-question-card');
     card.innerHTML = `
       <h3>${q.question}</h3>
       <div class="quiz-options" role="radiogroup" aria-label="Answer options">
@@ -92,14 +94,14 @@ const Quiz = (() => {
     });
   };
 
-  const selectAnswer = (index) => {
+const selectAnswer = (index) => {
     userAnswers.push(index);
-    const q = currentQuiz.questions[currentQuestion];
+  const q = currentQuiz.questions[currentQuestion];
 
     // Show correct/wrong feedback
     document.querySelectorAll('.quiz-option').forEach((btn) => {
       btn.disabled = true;
-      const i = parseInt(btn.dataset.index);
+    const i = parseInt(btn.dataset.index);
       if (i === q.correctIndex) {btn.classList.add('quiz-option--correct');}
       else if (i === index && i !== q.correctIndex) {btn.classList.add('quiz-option--wrong');}
     });
@@ -109,26 +111,26 @@ const Quiz = (() => {
       currentQuestion++;
       if (currentQuestion < currentQuiz.questions.length) {
         renderQuestion();
-        App.announce(`Question ${currentQuestion + 1}`);
+        announce(`Question ${currentQuestion + 1}`);
       } else {
         showResults();
       }
     }, 1200);
   };
 
-  const showResults = async () => {
+const showResults = async () => {
     document.getElementById('quiz-active').hidden = true;
-    const resultsEl = document.getElementById('quiz-results');
+  const resultsEl = document.getElementById('quiz-results');
     resultsEl.hidden = false;
 
     try {
-      const res = await fetch('/api/quiz/submit', {
+    const res = await fetch('/api/quiz/submit', {
         method: 'POST',
-        headers: CSRF.headers(),
+        headers: headers(),
         body: JSON.stringify({ questions: currentQuiz.questions, userAnswers, quizToken }),
       });
-      const json = await res.json();
-      const r = json.data;
+    const json = await res.json();
+    const r = json.data;
 
       resultsEl.innerHTML = `
         <div class="quiz-results__card">
@@ -149,21 +151,13 @@ const Quiz = (() => {
           </div>
         </div>
       `;
-      App.announce(`Quiz complete. Score: ${r.percentage} percent.`);
+      announce(`Quiz complete. Score: ${r.percentage} percent.`);
     } catch {
       resultsEl.innerHTML = '<p style="text-align:center">Failed to load results.</p>';
     }
   };
 
-  const restart = () => {
-    document.getElementById('quiz-setup').hidden = false;
-    document.getElementById('quiz-active').hidden = true;
-    document.getElementById('quiz-results').hidden = true;
-    currentQuiz = null;
-    currentQuestion = 0;
-    userAnswers = [];
-  };
+
 
   document.addEventListener('DOMContentLoaded', init);
-  return { restart };
-})();
+

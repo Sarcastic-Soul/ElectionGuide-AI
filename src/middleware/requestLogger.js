@@ -26,7 +26,7 @@
  * @see {@link https://cloud.google.com/logging/docs/structured-logging} Structured logging
  */
 
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 
 /**
  * Request logging middleware.
@@ -37,7 +37,7 @@ const { v4: uuidv4 } = require('uuid');
  */
 const requestLogger = (req, res, next) => {
   const startTime = Date.now();
-  const requestId = req.headers['x-request-id'] || uuidv4();
+  const requestId = req.headers['x-request-id'] || crypto.randomUUID();
 
   // Attach request ID for downstream use
   req.requestId = requestId;

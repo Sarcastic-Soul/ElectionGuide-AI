@@ -23,6 +23,11 @@
  * @see {@link https://cloud.google.com/run/docs/container-contract#lifecycle}
  */
 
+// IMPORTANT: trace-agent must be required and started before any other modules
+if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
+  require('@google-cloud/trace-agent').start();
+}
+
 const { createApp } = require('./app');
 const config = require('./config');
 const redisService = require('./services/redisService');

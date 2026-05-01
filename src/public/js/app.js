@@ -1,41 +1,42 @@
+import { loadIfNeeded as loadTimeline } from './timeline.js';
 /**
  * @module app
  * @description Main application controller — tab navigation, keyboard shortcuts, theme.
  */
 'use strict';
 
-const App = (() => {
-  const state = { activeTab: 'chat' };
+
+const state = { activeTab: 'chat' };
 
   /** Initialize the application */
-  const init = () => {
+const init = () => {
     setupNavigation();
     setupKeyboardShortcuts();
     announce('ElectionGuide AI loaded. Use the navigation tabs to explore.');
   };
 
   /** Set up tab navigation */
-  const setupNavigation = () => {
+const setupNavigation = () => {
     document.querySelectorAll('.nav__btn').forEach((btn) => {
       btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
   };
 
   /** Switch between panels */
-  const switchTab = (tab) => {
+const switchTab = (tab) => {
     if (state.activeTab === tab) {return;}
     state.activeTab = tab;
 
     // Update nav buttons
     document.querySelectorAll('.nav__btn').forEach((b) => {
-      const isActive = b.dataset.tab === tab;
+    const isActive = b.dataset.tab === tab;
       b.classList.toggle('nav__btn--active', isActive);
       b.setAttribute('aria-selected', isActive);
     });
 
     // Update panels
     document.querySelectorAll('.panel').forEach((p) => {
-      const isActive = p.id === `panel-${tab}`;
+    const isActive = p.id === `panel-${tab}`;
       p.classList.toggle('panel--active', isActive);
       p.hidden = !isActive;
     });
@@ -43,17 +44,17 @@ const App = (() => {
     announce(`Switched to ${tab} tab`);
 
     // Lazy-load timeline data
-    if (tab === 'timeline' && typeof Timeline !== 'undefined') {
-      Timeline.loadIfNeeded();
+    if (tab === 'timeline' && true) {
+      loadTimeline();
     }
   };
 
   /** Keyboard shortcuts — uses Ctrl+Shift to avoid conflicts with browser/OS Alt shortcuts */
-  const setupKeyboardShortcuts = () => {
+const setupKeyboardShortcuts = () => {
     document.addEventListener('keydown', (e) => {
       // Ctrl+Shift+1-4 for tab switching (avoids Alt+N browser/OS conflicts)
       if (e.ctrlKey && e.shiftKey) {
-        const shortcuts = { '1': 'chat', '2': 'timeline', '3': 'quiz', '4': 'about' };
+      const shortcuts = { '1': 'chat', '2': 'timeline', '3': 'quiz', '4': 'about' };
         if (shortcuts[e.key]) {
           e.preventDefault();
           switchTab(shortcuts[e.key]);
@@ -62,15 +63,15 @@ const App = (() => {
       // Focus chat input with /
       if (e.key === '/' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
         e.preventDefault();
-        const input = document.getElementById('chat-input');
+      const input = document.getElementById('chat-input');
         if (input) { input.focus(); }
       }
     });
   };
 
   /** Screen reader announcement */
-  const announce = (message) => {
-    const el = document.getElementById('sr-announcer');
+const announce = (message) => {
+  const el = document.getElementById('sr-announcer');
     if (el) {
       el.textContent = '';
       setTimeout(() => { el.textContent = message; }, 100);
@@ -78,7 +79,7 @@ const App = (() => {
   };
 
   /** Simple markdown to HTML converter */
-  const renderMarkdown = (text) => {
+const renderMarkdown = (text) => {
     if (!text) {return '';}
     return text
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -102,5 +103,4 @@ const App = (() => {
 
   document.addEventListener('DOMContentLoaded', init);
 
-  return { switchTab, announce, renderMarkdown, state };
-})();
+export { switchTab, announce, renderMarkdown, state };

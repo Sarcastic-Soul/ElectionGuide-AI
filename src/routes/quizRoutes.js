@@ -61,7 +61,7 @@ router.post(
     const { questions, userAnswers, sessionId, quizToken } = req.body;
 
     // Mathematically prove the questions came from our generator
-    const decodedToken = authService.verifyQuizToken(quizToken, questions);
+    authService.verifyQuizToken(quizToken, questions);
 
     if (questions.length !== userAnswers.length) {
       throw new AppError('Questions and answers arrays must have the same length', 400, 'VALIDATION_ERROR');

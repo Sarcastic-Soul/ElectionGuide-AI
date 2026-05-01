@@ -37,5 +37,11 @@ module.exports = [
       "no-shadow": "warn",
       "no-param-reassign": "warn"
     }
+  },
+  {
+    files: ["src/public/js/**/*.js"],
+    languageOptions: {
+      sourceType: "module"
+    }
   }
 ];

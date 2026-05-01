@@ -1,19 +1,22 @@
+import { announce } from './app.js';
+
+export { loadIfNeeded };
 /**
  * @module timeline
  * @description Interactive election process timeline with expandable steps.
  */
 'use strict';
 
-const Timeline = (() => {
-  let loaded = false;
 
-  const loadIfNeeded = async () => {
+let loaded = false;
+
+const loadIfNeeded = async () => {
     if (loaded) {return;}
     loaded = true;
 
     try {
-      const res = await fetch('/api/timeline');
-      const json = await res.json();
+    const res = await fetch('/api/timeline');
+    const json = await res.json();
       if (!json.success) {throw new Error('Failed to load timeline');}
       renderTimeline(json.data);
     } catch {
@@ -22,8 +25,8 @@ const Timeline = (() => {
     }
   };
 
-  const renderTimeline = (steps) => {
-    const container = document.getElementById('timeline');
+const renderTimeline = (steps) => {
+  const container = document.getElementById('timeline');
     container.innerHTML = steps.map((s) => `
       <div class="timeline-item" role="listitem" data-step="${s.id}">
         <div class="timeline-item__dot"></div>
@@ -51,14 +54,14 @@ const Timeline = (() => {
     });
   };
 
-  const handleClick = async (e) => {
-    const card = e.target.closest('.timeline-item__card');
+const handleClick = async (e) => {
+  const card = e.target.closest('.timeline-item__card');
     if (!card) {return;}
 
-    const item = card.closest('.timeline-item');
-    const stepId = item.dataset.step;
-    const detailsEl = document.getElementById(`details-${stepId}`);
-    const isOpen = detailsEl.classList.contains('open');
+  const item = card.closest('.timeline-item');
+  const stepId = item.dataset.step;
+  const detailsEl = document.getElementById(`details-${stepId}`);
+  const isOpen = detailsEl.classList.contains('open');
 
     if (isOpen) {
       detailsEl.classList.remove('open');
@@ -75,19 +78,19 @@ const Timeline = (() => {
     // Load details if needed
     if (!detailsEl.dataset.loaded) {
       try {
-        const res = await fetch(`/api/timeline/${stepId}`);
-        const json = await res.json();
+      const res = await fetch(`/api/timeline/${stepId}`);
+      const json = await res.json();
         if (!json.success) {throw new Error();}
-        const d = json.data;
+      const d = json.data;
 
-        const factsHtml = d.keyFacts ? `
+      const factsHtml = d.keyFacts ? `
           <div class="timeline-item__facts">
             <div class="timeline-item__facts-title">📌 Key Facts</div>
             <ul>${d.keyFacts.map((f) => `<li>${f}</li>`).join('')}</ul>
           </div>
         ` : '';
 
-        const detailsHtml = (d.details || '')
+      const detailsHtml = (d.details || '')
           .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
           .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
           .replace(/(<li>.*<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`)
@@ -102,8 +105,7 @@ const Timeline = (() => {
 
     detailsEl.classList.add('open');
     card.setAttribute('aria-expanded', 'true');
-    App.announce(`Expanded step ${stepId}`);
+    announce(`Expanded step ${stepId}`);
   };
 
-  return { loadIfNeeded };
-})();
+

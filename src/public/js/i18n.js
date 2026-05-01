@@ -1,21 +1,23 @@
+import { announce } from './app.js';
+import { headers } from './csrf.js';
 /**
  * @module i18n
  * @description Internationalization module using Google Cloud Translation API.
  */
 'use strict';
 
-const I18n = (() => {
-  let currentLang = 'en';
-  const cache = new Map();
 
-  const init = () => {
-    const select = document.getElementById('language-select');
+let currentLang = 'en';
+const cache = new Map();
+
+const init = () => {
+  const select = document.getElementById('language-select');
     if (select) {
       select.addEventListener('change', (e) => setLanguage(e.target.value));
     }
   };
 
-  const setLanguage = async (lang) => {
+const setLanguage = async (lang) => {
     if (lang === currentLang) {return;}
     currentLang = lang;
     document.documentElement.lang = lang;
@@ -26,31 +28,31 @@ const I18n = (() => {
     }
 
     // Translate static UI strings
-    const elements = document.querySelectorAll('.section-title, .section-subtitle, .about-card__title, .about-card__text, .footer__text');
+  const elements = document.querySelectorAll('.section-title, .section-subtitle, .about-card__title, .about-card__text, .footer__text');
     for (const el of elements) {
-      const original = el.dataset.original || el.textContent;
+    const original = el.dataset.original || el.textContent;
       el.dataset.original = original;
 
-      const translated = await translate(original, lang);
+    const translated = await translate(original, lang);
       if (translated) {el.textContent = translated;}
     }
 
     // Set RTL for Arabic
     document.documentElement.dir = ['ar', 'he'].includes(lang) ? 'rtl' : 'ltr';
-    App.announce(`Language changed to ${select.options[select.selectedIndex].text}`);
+    announce(`Language changed to ${select.options[select.selectedIndex].text}`);
   };
 
-  const translate = async (text, targetLang) => {
-    const key = `${targetLang}:${text}`;
+const translate = async (text, targetLang) => {
+  const key = `${targetLang}:${text}`;
     if (cache.has(key)) {return cache.get(key);}
 
     try {
-      const res = await fetch('/api/translate', {
+    const res = await fetch('/api/translate', {
         method: 'POST',
-        headers: CSRF.headers(),
+        headers: headers(),
         body: JSON.stringify({ text, targetLanguage: targetLang }),
       });
-      const json = await res.json();
+    const json = await res.json();
       if (json.success) {
         cache.set(key, json.data.translatedText);
         return json.data.translatedText;
@@ -60,5 +62,4 @@ const I18n = (() => {
   };
 
   document.addEventListener('DOMContentLoaded', init);
-  return { setLanguage, translate };
-})();
+
